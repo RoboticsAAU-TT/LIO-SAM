@@ -3,7 +3,7 @@
 
     # Topics
     pointCloudTopic: "/livox/lidar"                   # Point cloud data
-    imuTopic: "/livox/imu"                        # IMU data
+    imuTopic: "/imu/data_repub"                        # IMU data
     odomTopic: "odometry/imu"                    # IMU pre-preintegration odometry, same frequency as IMU
     gpsTopic: "odometry/gpsz"                    # GPS odometry topic from navsat, see module_navsat.launch file
 
@@ -33,20 +33,20 @@
     lidarMaxRange: 100.0                        # default: 1000.0, maximum lidar range to be used
 
     # IMU Settings
-    imuAccNoise: 3.9939570888238808e-03
-    imuGyrNoise: 1.5636343949698187e-03
-    imuAccBiasN: 6.4356659353532566e-05
-    imuGyrBiasN: 3.5640318696367613e-05
+    imuAccNoise: 0.003018699373935
+    imuGyrNoise: 0.00027225733506726
+    imuAccBiasN: 0.00021151154465473703
+    imuGyrBiasN: 4.266310258698139e-06
 
     imuGravity: 9.80511
     imuRPYWeight: 0.01
 
-    extrinsicTrans:  [ 0.0,  0.0,  0.0 ]
-    extrinsicRot:    [-1.0,  0.0,  0.0,
-                       0.0,  1.0,  0.0,
-                       0.0,  0.0, -1.0 ]
-    extrinsicRPY: [ 0.0,  1.0,  0.0,
-                   -1.0,  0.0,  0.0,
+    extrinsicTrans:  [ 0.11, -0.387369, 0.17 ]
+    extrinsicRot:    [0.998752,  0.048807,  0.010611,
+                      -0.048635,  0.998691, -0.015855,
+                      -0.011371,  0.015319,  0.999818]
+    extrinsicRPY: [ 1.0,  0.0,  0.0,
+                    0.0,  1.0,  0.0,
                     0.0,  0.0,  1.0 ]
 
     # LOAM feature threshold

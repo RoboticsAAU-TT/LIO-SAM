@@ -4,12 +4,14 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, Command
 from launch_ros.actions import Node
+from launch.conditions import IfCondition
 
 
 def generate_launch_description():
 
     share_dir = get_package_share_directory('lio_sam')
     parameter_file = LaunchConfiguration('params_file')
+    rviz_use = LaunchConfiguration('rviz')
     xacro_path = os.path.join(share_dir, 'config', 'robot.urdf.xacro')
     rviz_config_file = os.path.join(share_dir, 'config', 'rviz2.rviz')
 
@@ -19,10 +21,16 @@ def generate_launch_description():
             share_dir, 'config', 'mid360.yaml'),
         description='FPath to the ROS2 parameters file to use.')
 
+    declare_rviz_cmd = DeclareLaunchArgument(
+        'rviz', default_value='true',
+        description='Use RViz to monitor results'
+    )
+
     print("urdf_file_name : {}".format(xacro_path))
 
     return LaunchDescription([
         params_declare,
+        declare_rviz_cmd,
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
@@ -72,6 +80,7 @@ def generate_launch_description():
             executable='rviz2',
             name='rviz2',
             arguments=['-d', rviz_config_file],
-            output='screen'
+            output='screen',
+            condition=IfCondition(rviz_use)
         )
     ])
