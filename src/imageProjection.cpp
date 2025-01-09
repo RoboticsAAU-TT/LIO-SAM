@@ -14,6 +14,20 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (VelodynePointXYZIRT,
     (uint16_t, ring, ring) (float, time, time)
 )
 
+struct LivoxPointXYZIRT
+{
+    PCL_ADD_POINT4D
+    float intensity;
+    uint8_t tag;
+    uint8_t line;
+    float time;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+} EIGEN_ALIGN16;
+POINT_CLOUD_REGISTER_POINT_STRUCT(LivoxPointXYZIRT, 
+      (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)
+      (uint8_t, tag, tag)(uint8_t, line, line)(float, time, time)
+)
+
 struct OusterPointXYZIRT {
     PCL_ADD_POINT4D;
     float intensity;
@@ -71,6 +85,7 @@ private:
 
     pcl::PointCloud<PointXYZIRT>::Ptr laserCloudIn;
     pcl::PointCloud<OusterPointXYZIRT>::Ptr tmpOusterCloudIn;
+    pcl::PointCloud<LivoxPointXYZIRT>::Ptr tmpLivoxCloudIn;
     pcl::PointCloud<PointType>::Ptr   fullCloud;
     pcl::PointCloud<PointType>::Ptr   extractedCloud;
 
@@ -137,6 +152,7 @@ public:
     {
         laserCloudIn.reset(new pcl::PointCloud<PointXYZIRT>());
         tmpOusterCloudIn.reset(new pcl::PointCloud<OusterPointXYZIRT>());
+        tmpLivoxCloudIn.reset(new pcl::PointCloud<LivoxPointXYZIRT>());
         fullCloud.reset(new pcl::PointCloud<PointType>());
         extractedCloud.reset(new pcl::PointCloud<PointType>());
 
@@ -232,9 +248,26 @@ public:
         // convert cloud
         currentCloudMsg = std::move(cloudQueue.front());
         cloudQueue.pop_front();
-        if (sensor == SensorType::VELODYNE || sensor == SensorType::LIVOX)
+        if (sensor == SensorType::VELODYNE)
         {
             pcl::moveFromROSMsg(currentCloudMsg, *laserCloudIn);  
+        }
+        else if (sensor == SensorType::LIVOX)
+        {
+            pcl::moveFromROSMsg(currentCloudMsg, *tmpLivoxCloudIn);
+            laserCloudIn->points.resize(tmpLivoxCloudIn->size());
+            laserCloudIn->is_dense = tmpLivoxCloudIn->is_dense;
+            for (size_t i = 0; i < tmpLivoxCloudIn->size(); i++)
+            {
+                auto &src = tmpLivoxCloudIn->points[i];
+                auto &dst = laserCloudIn->points[i];
+                dst.x = src.x;
+                dst.y = src.y;
+                dst.z = src.z;
+                dst.intensity = src.intensity;
+                dst.ring = src.line;
+                dst.time = src.time;
+            }
         }
         else if (sensor == SensorType::OUSTER)
         {
@@ -283,7 +316,7 @@ public:
             ringFlag = -1;
             for (int i = 0; i < (int)currentCloudMsg.fields.size(); ++i)
             {
-                if (currentCloudMsg.fields[i].name == "ring")
+                if (currentCloudMsg.fields[i].name == "ring" || currentCloudMsg.fields[i].name == "line")
                 {
                     ringFlag = 1;
                     break;
@@ -601,7 +634,6 @@ public:
                 columnIdn = columnIdnCountVec[rowIdn];
                 columnIdnCountVec[rowIdn] += 1;
             }
-
 
             if (columnIdn < 0 || columnIdn >= Horizon_SCAN)
                 continue;
